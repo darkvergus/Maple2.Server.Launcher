@@ -1,0 +1,104 @@
+# Build output
+bin/
+obj/
+out/
+
+# Rider project files
+.idea/
+*.sln.iml
+*.DotSettings.user
+*.DotSettings
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.dbmdl
+
+# Mono auto-generated files
+mono_crash.*
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Visual Studio cache
+.vs/
+.vscode/
+
+# Rider caches
+.idea/
+.idea_modules/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Rider logs
+.idea/**/logs/
+
+# Rider local history
+.idea/**/localHistory/
+
+# ASP.NET temporary files
+App_Data/*
+
+# NuGet packages
+*.nupkg
+packages/
+.nuget/
+
+# MSBuild picks up these files as well
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# DotCover
+.idea/**/dotCover/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Rider Unity plugin
+.idea/**/unity3d/
+
+# Rider settings
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/markdown-navigator.xml
+.idea/dictionaries/
+
+# Rider caches
+.idea/**/caches/
+
+# Rider Deployment settings
+.idea/deployment.xml
+
+# Rider Docker plugin
+.idea/**/docker.xml
+
+# Rider external-build
+.idea/externalBuild.xml
+
+# Rider UI designer
+.idea/uiDesigner.xml
+
+# Rider scratch files
+.idea/**/scratch/
+
+# Environment files
+.env
+.env.*.local
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+publish/
