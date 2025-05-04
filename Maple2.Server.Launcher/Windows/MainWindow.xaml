@@ -4,7 +4,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Maple2 Server Launcher"
         Width="700" Height="450"
-        WindowStyle="None" AllowsTransparency="true" Background="Transparent">
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        AllowsTransparency="true" 
+        Background="Transparent">
     <Border CornerRadius="8"
             Background="#FF2D2D30"
             BorderBrush="#FF2D2D30"
@@ -46,7 +49,7 @@
             <TabControl Name="MainTabControl" Grid.Row="1" Margin="10" FocusVisualStyle="{x:Null}">
                 <TabControl.Resources>
                     <Style TargetType="TabItem">
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                     </Style>
                 </TabControl.Resources>
                 <!-- PROJECT Tab -->
@@ -55,33 +58,34 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />   <!-- Label -->
                             <RowDefinition Height="Auto" />   <!-- URL + Button -->
-                            <RowDefinition Height="*"   />   <!-- Log output -->
+                            <RowDefinition Height="*" />   <!-- Log output -->
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"   /> <!-- URL takes all available space -->
+                            <ColumnDefinition Width="*" /> <!-- URL takes all available space -->
                             <ColumnDefinition Width="Auto" /> <!-- Button fits its content -->
                         </Grid.ColumnDefinitions>
-                        
+
                         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
-                                   Text="Repository URL:" 
+                                   Text="Repository URL:"
                                    VerticalAlignment="Center" Margin="0,0,0,4"
-                                   Foreground="White"/>
-                        <TextBox   Grid.Row="1" Grid.Column="0" Name="TxtRepoUrl"
-                                   Margin="0,0,8,0"
-                                   Text="https://github.com/YourRepo/Maple2.git" />
-                        <Button    Grid.Row="1" Grid.Column="1" Name="BtnCloneUpdate"
-                                   Content="Clone" Width="120" Height="24"
-                                   Style="{StaticResource ModernButton}" 
-                                   Click="BtnCloneUpdate_Click" />
-                        <TextBox   Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                   Name="TxtProjectLog" Margin="0,8,0,0"
-                                   IsReadOnly="True" TextWrapping="Wrap"
-                                   AcceptsReturn="True"
-                                   VerticalScrollBarVisibility="Auto"/>
+                                   Foreground="White" />
+                        <TextBox Grid.Row="1" Grid.Column="0" Name="TxtRepoUrl"
+                                 Margin="0,0,8,0" />
+                        <Button Grid.Row="1" Grid.Column="1" Name="BtnCloneUpdate"
+                                Content="Clone" Width="120" Height="24"
+                                Style="{StaticResource ModernButton}"
+                                Click="BtnCloneUpdate_Click" />
+                        <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                 Name="TxtProjectLog" Margin="0,8,0,0"
+                                 IsReadOnly="True" TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto" />
                     </Grid>
                 </TabItem>
                 <!-- DATABASE TAB -->
-                 <TabItem Name="DatabaseTab" Header="Database">
+                <TabItem x:Name="DatabaseTab"
+                         Header="Database"
+                         Loaded="DatabaseTab_Loaded">
                     <Grid Margin="10">
                         <Grid.RowDefinitions>
                             <!-- 4 rows of form fields -->
@@ -117,9 +121,17 @@
                                     Height="24"
                                     Click="BtnSaveDbConfig_Click" />
                         </StackPanel>
+                        
+                        <TextBox Grid.Row="5" Grid.Column="0"
+                                 Name="TxtDatabaseLog"
+                                 Margin="0,8,0,0"
+                                 VerticalScrollBarVisibility="Auto"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 IsReadOnly="True" />
                     </Grid>
                 </TabItem>
-                
+
                 <!-- SETUP TAB -->
                 <TabItem Name="SetupTab" Header="Setup">
                     <Grid Margin="10">
@@ -175,8 +187,8 @@
                                 Click="BtnBuildRun_Click"
                                 Height="24"
                                 Width="140" />
-                        
-                        <TabControl x:Name="ServerOutputTabs" Grid.Row="1" Margin="0,8,0,0"  SelectionChanged="ServerOutputTabs_SelectionChanged" />
+
+                        <TabControl x:Name="ServerOutputTabs" Grid.Row="1" Margin="0,8,0,0" SelectionChanged="ServerOutputTabs_SelectionChanged" />
                     </Grid>
                 </TabItem>
             </TabControl>

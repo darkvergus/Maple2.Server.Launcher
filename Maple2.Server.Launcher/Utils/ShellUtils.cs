@@ -5,188 +5,90 @@ using MySqlConnector;
 
 namespace Maple2.Server.Launcher.Utils;
 
+/// <summary>
+/// Generic shell / network helpers. All progress is reported through <see cref="IProgress{String}"/> so UI‑free code can consume it.
+/// .env helpers were extracted to <c>EnvUtils</c>.
+/// </summary>
 public static class ShellUtils
 {
     /// <summary>
-    /// Runs a shell process (git/dotnet/etc.) with redirected IO and pumps its output into the provided TextBox.
+    /// Runs a process and streams its stdout / stderr to the provided progress sink.
     /// </summary>
-    public static async Task RunProcessAsync(string filename, string args, string? workDir, TextBox outputBox)
+    public static async Task RunProcessAsync(string file, string args, string? workDir, IProgress<string> log)
     {
-        ProcessStartInfo processStartInfo = new(filename, args)
+        ProcessStartInfo processStartInfo = new(file, args)
         {
             WorkingDirectory = workDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            RedirectStandardInput = false,
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        Process process = new()
-        {
-            StartInfo = processStartInfo, 
-            EnableRaisingEvents = true
-        };
+        using Process proc = new() { StartInfo = processStartInfo };
 
-        process.OutputDataReceived += (_, dataReceivedEventArgs) =>
+        proc.OutputDataReceived += (_, e) =>
         {
-            if (!string.IsNullOrEmpty(dataReceivedEventArgs.Data))
+            if (e.Data != null)
             {
-                AppendLine(outputBox, dataReceivedEventArgs.Data);
+                log.Report(e.Data);
             }
         };
-        
-        process.ErrorDataReceived += (_, dataReceivedEventArgs) =>
+        proc.ErrorDataReceived += (_, e) =>
         {
-            if (!string.IsNullOrEmpty(dataReceivedEventArgs.Data))
+            if (e.Data != null)
             {
-                AppendLine(outputBox, dataReceivedEventArgs.Data);
+                log.Report(e.Data);
             }
         };
 
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-        await process.WaitForExitAsync();
-    }
-    
-    /// <summary>
-    /// Logs a line in the form:
-    ///  HH:mm:ss.fff  Component   [LVL] <TID> Message
-    /// </summary>
-    public static void LogFormatted(TextBox box, string component, string level, string message, int threadId = 1)
-    {
-        string ts = DateTime.Now.ToString("HH:mm:ss.fff");
-
-        string comp = component.PadRight(12);
-
-        string lvl = level.ToUpper().PadRight(3)[..3];
-
-        box.AppendText($"{ts}  {comp} [{lvl}] <{threadId}> {message}{Environment.NewLine}");
-        box.ScrollToEnd();
-    }
-    
-    private static void AppendLine(TextBox box, string? text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return;
-        }
-
-        box.Dispatcher.Invoke(() =>
-        {
-            box.AppendText(text + Environment.NewLine);
-            box.ScrollToEnd();
-        });
-    }
-    
-    /// <summary>
-    /// Ensures there is a .env file (creates from .env.example if needed), returns its path.
-    /// </summary>
-    public static string GetEnvPath(string path)
-    {
-        ArgumentNullException.ThrowIfNull(path);
-
-        string envPath = Path.Combine(path, ".env");
-        string examplePath = Path.Combine(path, ".env.example");
-
-        if (!File.Exists(envPath) && File.Exists(examplePath))
-        {
-            File.Copy(examplePath, envPath);
-        }
-        
-        return !File.Exists(envPath) ? throw new FileNotFoundException("Neither .env nor .env.example found.", envPath) : envPath;
-    }
-
-
-    /// <summary>
-    /// Updates (or appends) a key=value pair in an .env file.
-    /// </summary>
-    public static void UpdateEnvKey(string envPath, string key, string value)
-    {
-        if (!File.Exists(envPath))
-        {
-            return;
-        }
-
-        List<string> lines = File.ReadAllLines(envPath).ToList();
-        string prefix = key + "=";
-        int idx = lines.FindIndex(l => l.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
-        if (idx >= 0)
-        {
-            lines[idx] = prefix + value;
-        }
-        else
-        {
-            lines.Add(prefix + value);
-        }
-
-        File.WriteAllLines(envPath, lines);
+        proc.Start();
+        proc.BeginOutputReadLine();
+        proc.BeginErrorReadLine();
+        await proc.WaitForExitAsync();
     }
 
     /// <summary>
-    /// Parses a simple .env file for given keys.
+    /// Download several files in parallel and report each successful save.
     /// </summary>
-    public static void LoadEnvKeys(string envPath, Dictionary<string, Action<string>> setters)
-    {
-        if (!File.Exists(envPath))
-        {
-            return;
-        }
-
-        foreach (string line in File.ReadAllLines(envPath))
-        {
-            foreach (KeyValuePair<string, Action<string>> kv in setters.Where(kv => line.StartsWith(kv.Key + "=")))
-            {
-                kv.Value(line.Substring(kv.Key.Length + 1));
-                break;
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Download multiple files in parallel and log each save.
-    /// </summary>
-    public static async Task DownloadFilesAsync(string dir, string[] files, TextBox outputBox)
+    public static async Task DownloadFilesAsync(string dir, IEnumerable<string> files, IProgress<string> log)
     {
         Directory.CreateDirectory(dir);
         using HttpClient http = new();
         IEnumerable<Task> tasks = files.Select(async file =>
         {
-            string url  = $"https://github.com/Zintixx/MapleStory2-XML/releases/latest/download/{file}";
+            string url = $"https://github.com/Zintixx/MapleStory2-XML/releases/latest/download/{file}";
             byte[] data = await http.GetByteArrayAsync(url);
             string dest = Path.Combine(dir, file);
             await File.WriteAllBytesAsync(dest, data);
-            AppendLine(outputBox, $"→ {file} saved to {dest}");
+            log.Report($"→ {file} saved to {dest}");
         });
         await Task.WhenAll(tasks);
     }
-    
+
     /// <summary>
-    /// Tests a MySQL connection using a client library.
+    /// Tests a MySQL connection using the MySqlConnector library.
     /// </summary>
-    public static async Task<bool> TestMySqlConnectionAsync(string host, string port, string user, string password, TextBox outputBox)
+    public static async Task<bool> TestMySqlConnectionAsync(string host, string port, string user, string password, IProgress<string> log)
     {
-        string connStr = new MySqlConnectionStringBuilder
+        string connectionString = new MySqlConnectionStringBuilder
         {
-            Server   = host,
-            Port     = uint.Parse(port),
-            UserID   = user,
-            Password = password,
-            Database = ""
+            Server = host,
+            Port = uint.Parse(port),
+            UserID = user,
+            Password = password
         }.ConnectionString;
 
         try
         {
-            await using MySqlConnection conn = new(connStr);
+            await using MySqlConnection conn = new(connectionString);
             await conn.OpenAsync();
-            AppendLine(outputBox, "✔ MySQL library connection succeeded.");
+            log.Report("✔ MySQL connection successful.");
             return true;
         }
         catch (Exception ex)
         {
-            AppendLine(outputBox, $"[ERROR] MySQL library connection failed: {ex.Message}");
+            log.Report("[ERROR] MySQL connection failed: " + ex.Message);
             return false;
         }
     }
-
 }
